@@ -1,0 +1,151 @@
+<!--
+ * @Descripttion: 
+ * @version: 
+ * @Author: wenlan
+ * @Date: 2021-12-13 17:34:05
+ * @LastEditors: wenlan
+ * @LastEditTime: 2021-12-15 16:34:21
+-->
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>温澜工作室</title>
+        <script src="http://res2.wx.qq.com/open/js/jweixin-1.6.0.js"></script>
+        <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+    </head>
+    <body>
+        <div id="app">
+            <h2>内网穿透</h2>
+            <button @click="scanCode">扫一扫</button>
+            <button @click="choseImg">上传</button>
+            <button @click="checkLocation">获取地理位置坐标</button>
+            <button @click="share">打开地图</button>
+        </div>
+        <script>
+            new Vue({
+                el: '#app',
+                mounted() {
+                    this.wxconfig();
+                },
+                methods: {
+                    wxconfig() {
+                        let url = location.href; //get # 之前的链接
+                        console.log(url);
+                        axios.get(`http://ev8mxx.natappfree.cc/jsapi?url=${url}`).then(res => {
+                            console.log(res.data);
+                            let { appid, timestamp, noncestr, url, signature } = res.data.conf;
+                            console.log(appid);
+                            wx.config({
+                                debug: true, // 开启调试模式,调用的所有api的返回值会在客户端alert出来，若要查看传入的参数，可以在pc端打开，参数信息会通过log打出，仅在pc端时才会打印。
+                                appId: appid, // 必填，公众号的唯一标识
+                                timestamp, // 必填，生成签名的时间戳
+                                nonceStr: noncestr, // 必填，生成签名的随机串
+                                signature, // 必填，签名
+                                jsApiList: [
+                                    'scanQRCode',
+                                    'getLocation',
+                                    'chooseImage',
+                                    'checkJsApi',
+                                    'openLocation',
+                                    'updateTimelineShareData',
+                                ], // 必填，需要使用的JS接口列表
+                            });
+                            // wx.ready(function () {
+                            //     // config信息验证后会执行ready方法，所有接口调用都必须在config接口获得结果之后，config是一个客户端的异步操作，所以如果需要在页面加载时就调用相关接口，则须把相关接口放在ready函数中调用来确保正确执行。对于用户触发时才调用的接口，则可以直接调用，不需要放在ready函数中。
+                            //     wx.checkJsApi({
+                            //         jsApiList: ['getLocation'],
+                            //         success: function (res) {
+                            //             // alert(JSON.stringify(res));
+                            //             // alert(JSON.stringify(res.checkResult.getLocation));
+                            //             if (res.checkResult.getLocation == false) {
+                            //                 alert(
+                            //                     '你的微信版本太低，不支持微信JS接口，请升级到最新的微信版本！'
+                            //                 );
+                            //                 return;
+                            //             }
+                            //         },
+                            //     });
+
+                            //     wx.getLocation({
+                            //         success: function (res) {
+                            //             alert(JSON.stringify(res));
+                            //         },
+                            //         cancel: function (res) {
+                            //             alert('用户拒绝授权获取地理位置');
+                            //         },
+                            //     });
+                            // });
+                            wx.error(function (res) {
+                                alert('接口调取失败');
+                            });
+                        });
+                    },
+                    scanCode() {
+                        wx.scanQRCode({
+                            needResult: 0, // 默认为0，扫描结果由微信处理，1则直接返回扫描结果，
+                            scanType: ['qrCode', 'barCode'], // 可以指定扫二维码还是一维码，默认二者都有
+                            success: function (res) {
+                                var result = res.resultStr; // 当needResult 为 1 时，扫码返回的结果
+                                console.log(result);
+                            },
+                        });
+                    },
+                    checkLocation() {
+                        wx.ready(function () {
+                            wx.checkJsApi({
+                                jsApiList: ['getLocation'],
+                                success: function (res) {
+                                    // alert(JSON.stringify(res));
+                                    // alert(JSON.stringify(res.checkResult.getLocation));
+                                    if (res.checkResult.getLocation == false) {
+                                        alert(
+                                            '你的微信版本太低，不支持微信JS接口，请升级到最新的微信版本！'
+                                        );
+                                        return;
+                                    }
+                                },
+                            });
+                            wx.getLocation({
+                                type: 'wgs84', // 默认为wgs84的gps坐标，如果要返回直接给openLocation用的火星坐标，可传入'gcj02'
+                                success: function (res) {
+                                    alert(JSON.stringify(res));
+                                },
+                                cancel: function (res) {
+                                    alert('用户拒绝授权获取地理位置');
+                                },
+                            });
+                            wx.error(function (res) {
+                                alert('接口调取失败');
+                            });
+                        });
+                    },
+                    choseImg() {
+                        wx.chooseImage({
+                            count: 1, // 默认9
+                            sizeType: ['original', 'compressed'], // 可以指定是原图还是压缩图，默认二者都有
+                            sourceType: ['album', 'camera'], // 可以指定来源是相册还是相机，默认二者都有
+                            success: function (res) {
+                                var localIds = res.localIds; // 返回选定照片的本地ID列表，localId可以作为img标签的src属性显示图片
+                                alert(res);
+                            },
+                        });
+                    },
+                    share() {
+                        wx.openLocation({
+                            latitude: 30.49984, // 纬度，浮点数，范围为90 ~ -90
+                            longitude: 114.34253, // 经度，浮点数，范围为180 ~ -180。
+                            name: '温澜科技工作室', // 位置名
+                            address: '', // 地址详情说明
+                            scale: 1, // 地图缩放级别,整型值,范围从1~28。默认为最大
+                            infoUrl: '', // 在查看位置界面底部显示的超链接,可点击跳转
+                        });
+                    },
+                },
+            });
+        </script>
+    </body>
+</html>
